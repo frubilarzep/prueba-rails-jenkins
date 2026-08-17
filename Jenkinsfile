@@ -26,7 +26,7 @@ pipeline {
                             sh 'bundle install'
                         }
                         stage('Test') {
-                            sh 'bin/rails db:create db:schema:load'
+                            sh 'bin/rails db:schema:load'
                             sh 'bundle exec rspec'
                         }
                         stage('Lint') {

@@ -19,7 +19,10 @@ RSpec.describe "Tasks", type: :request do
       get "/tasks/#{task.id}"
 
       expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body)["id"]).to eq(task.id)
+      body = JSON.parse(response.body)
+      expect(body["id"]).to eq(task.id)
+      expect(body["title"]).to eq(task.title)
+      expect(body["completed"]).to eq(task.completed)
     end
   end
 

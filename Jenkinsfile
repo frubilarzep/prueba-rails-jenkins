@@ -17,37 +17,21 @@ pipeline {
             }
         }
 
-        stage('Install deps') {
+        stage('Build & Test') {
             steps {
                 script {
                     docker.image('ruby:3.3.7-slim').inside('--network course-net -u root:root') {
-                        sh 'apt-get update -qq && apt-get install -y -qq build-essential libpq-dev git'
-                        sh 'bundle install'
-                    }
-                }
-            }
-        }
-
-        stage('Test') {
-            steps {
-                script {
-                    docker.image('ruby:3.3.7-slim').inside('--network course-net -u root:root') {
-                        sh 'apt-get update -qq && apt-get install -y -qq build-essential libpq-dev git'
-                        sh 'bundle install'
-                        sh 'bin/rails db:create db:schema:load'
-                        sh 'bundle exec rspec'
-                    }
-                }
-            }
-        }
-
-        stage('Lint') {
-            steps {
-                script {
-                    docker.image('ruby:3.3.7-slim').inside('--network course-net -u root:root') {
-                        sh 'apt-get update -qq && apt-get install -y -qq build-essential libpq-dev git'
-                        sh 'bundle install'
-                        sh 'bundle exec rubocop'
+                        stage('Install deps') {
+                            sh 'apt-get update -qq && apt-get install -y -qq build-essential libpq-dev git'
+                            sh 'bundle install'
+                        }
+                        stage('Test') {
+                            sh 'bin/rails db:create db:schema:load'
+                            sh 'bundle exec rspec'
+                        }
+                        stage('Lint') {
+                            sh 'bundle exec rubocop'
+                        }
                     }
                 }
             }

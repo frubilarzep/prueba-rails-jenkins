@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         RAILS_ENV = 'test'
-        DATABASE_URL = 'postgres://postgres:postgres@localhost:5432/prueba_rails_jenkins_test'
+        DATABASE_URL = credentials('sandbox-cicd-test-db-url')
     }
 
     options {
@@ -19,20 +19,37 @@ pipeline {
 
         stage('Install deps') {
             steps {
-                sh 'bundle install'
+                script {
+                    docker.image('ruby:3.3.7-slim').inside('--network course-net -u root:root') {
+                        sh 'apt-get update -qq && apt-get install -y -qq build-essential libpq-dev git'
+                        sh 'bundle install'
+                    }
+                }
             }
         }
 
         stage('Test') {
             steps {
-                sh 'bin/rails db:create db:schema:load'
-                sh 'bundle exec rspec'
+                script {
+                    docker.image('ruby:3.3.7-slim').inside('--network course-net -u root:root') {
+                        sh 'apt-get update -qq && apt-get install -y -qq build-essential libpq-dev git'
+                        sh 'bundle install'
+                        sh 'bin/rails db:create db:schema:load'
+                        sh 'bundle exec rspec'
+                    }
+                }
             }
         }
 
         stage('Lint') {
             steps {
-                sh 'bundle exec rubocop'
+                script {
+                    docker.image('ruby:3.3.7-slim').inside('--network course-net -u root:root') {
+                        sh 'apt-get update -qq && apt-get install -y -qq build-essential libpq-dev git'
+                        sh 'bundle install'
+                        sh 'bundle exec rubocop'
+                    }
+                }
             }
         }
 

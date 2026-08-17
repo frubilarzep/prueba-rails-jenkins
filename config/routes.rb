@@ -5,6 +5,10 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # Used by the deploy pipeline's Health Check stage. Returns a plain
+  # JSON stub with no dependency checks (no DB, etc).
+  get "health" => "health#show"
+
   resources :tasks
 
   # Defines the root path route ("/")

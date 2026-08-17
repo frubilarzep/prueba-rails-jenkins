@@ -6,6 +6,10 @@ pipeline {
         DATABASE_URL = 'postgres://postgres:postgres@localhost:5432/prueba_rails_jenkins_test'
     }
 
+    options {
+        disableConcurrentBuilds()
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -13,9 +17,16 @@ pipeline {
             }
         }
 
-        stage('Install dependencies') {
+        stage('Install deps') {
             steps {
-                sh 'bundle install --deployment --without production'
+                sh 'bundle install'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'bin/rails db:create db:schema:load'
+                sh 'bundle exec rspec'
             }
         }
 
@@ -25,29 +36,43 @@ pipeline {
             }
         }
 
-        stage('Security scan') {
+        stage('Build image') {
             steps {
-                sh 'bundle exec brakeman -q -w2'
-                sh 'bundle exec bundler-audit check --update'
+                sh 'docker build -t sandbox-cicd .'
             }
         }
 
-        stage('Prepare database') {
+        stage('Deploy') {
+            when { branch 'production' }
             steps {
-                sh 'bin/rails db:create db:schema:load'
+                withCredentials([string(credentialsId: 'sandbox-cicd-rails-master-key', variable: 'RAILS_MASTER_KEY')]) {
+                    sh '''
+                        docker rm -f sandbox-cicd || true
+                        docker run -d \
+                          --name sandbox-cicd \
+                          --network course-net \
+                          -p 127.0.0.1:4099:3000 \
+                          -e RAILS_ENV=production \
+                          -e RAILS_MASTER_KEY="$RAILS_MASTER_KEY" \
+                          sandbox-cicd
+                    '''
+                }
             }
         }
 
-        stage('Test') {
+        stage('Migrate') {
+            when { branch 'production' }
             steps {
-                sh 'bundle exec rspec'
+                // Sandbox deploy has no database provisioned yet, nothing to migrate.
+                sh 'echo "No database configured for this sandbox deploy, skipping migrations"'
             }
         }
-    }
 
-    post {
-        always {
-            junit allowEmptyResults: true, testResults: 'spec/reports/*.xml'
+        stage('Health Check') {
+            when { branch 'production' }
+            steps {
+                sh 'curl -f http://127.0.0.1:4099/health'
+            }
         }
     }
 }

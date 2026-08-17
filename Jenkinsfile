@@ -22,7 +22,7 @@ pipeline {
                 script {
                     docker.image('ruby:3.3.7-slim').inside('--network course-net -u root:root') {
                         stage('Install deps') {
-                            sh 'apt-get update -qq && apt-get install -y -qq build-essential libpq-dev git'
+                            sh 'apt-get update -qq && apt-get install -y -qq build-essential libpq-dev libvips git'
                             sh 'bundle install'
                         }
                         stage('Test') {

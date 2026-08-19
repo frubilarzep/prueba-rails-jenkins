@@ -10,6 +10,7 @@ Rails.application.routes.draw do
   get "health" => "health#show"
 
   resources :tasks
+  resources :assigns
 
   # Defines the root path route ("/")
   # root "posts#index"

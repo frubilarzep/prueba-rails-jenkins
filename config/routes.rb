@@ -10,6 +10,7 @@ Rails.application.routes.draw do
   get "health" => "health#show"
 
   resources :tasks
+  resources :asignaturas
   resources :assigns
   resources :people
 

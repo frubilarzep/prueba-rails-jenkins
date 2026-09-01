@@ -11,6 +11,7 @@ Rails.application.routes.draw do
 
   resources :tasks
   resources :assigns
+  resources :people
 
   # Defines the root path route ("/")
   # root "posts#index"

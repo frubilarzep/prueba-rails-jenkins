@@ -32,6 +32,10 @@ pipeline {
                         stage('Lint') {
                             sh 'bundle exec rubocop'
                         }
+                        stage('Security scan') {
+                            sh 'bin/brakeman --no-pager'
+                            sh 'bin/bundler-audit'
+                        }
                     }
                 }
             }

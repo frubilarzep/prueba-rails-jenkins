@@ -33,6 +33,10 @@ gem "thruster", require: false
 gem "image_processing", "~> 2.0"
 gem "ruby-vips", "~> 2.2"
 
+# Serve OpenAPI (Swagger) docs and UI at /api-docs [https://github.com/rswag/rswag]
+gem "rswag-api"
+gem "rswag-ui"
+
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 # gem "rack-cors"
 
@@ -52,4 +56,7 @@ group :development, :test do
   # RSpec for Rails
   gem "rspec-rails"
   gem "factory_bot_rails"
+
+  # Generate the OpenAPI spec from request specs
+  gem "rswag-specs"
 end

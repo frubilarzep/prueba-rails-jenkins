@@ -10,7 +10,7 @@ gem "puma", ">= 5.0"
 # gem "jbuilder"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-# gem "bcrypt", "~> 3.1.7"
+gem "bcrypt", "~> 3.1.7"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
@@ -29,6 +29,13 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 2.0"
 gem "ruby-vips", "~> 2.2"
+
+# JSON Web Tokens for API authentication [https://github.com/jwt/ruby-jwt]
+gem "jwt", "~> 2.9"
+
+# Serve OpenAPI (Swagger) docs and UI at /api-docs [https://github.com/rswag/rswag]
+gem "rswag-api"
+gem "rswag-ui"
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 # gem "rack-cors"
@@ -49,4 +56,7 @@ group :development, :test do
   # RSpec for Rails
   gem "rspec-rails"
   gem "factory_bot_rails"
+
+  # Generate the OpenAPI spec from request specs
+  gem "rswag-specs"
 end

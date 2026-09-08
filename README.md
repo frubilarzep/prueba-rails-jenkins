@@ -2,8 +2,9 @@
 
 Rails API (Rails 8.1, Ruby 3.3.7, PostgreSQL) con un pipeline de CI/CD en
 Jenkins que despliega a un droplet Ubuntu ya montado (Docker + Nginx + Jenkins
-+ Postgres). El proyecto parte desde un esqueleto vacío: solo incluye el
-endpoint `GET /health` que usa el stage de Health Check del pipeline.
++ Postgres). El proyecto parte desde un esqueleto vacío con el endpoint `GET /health`
+que usa el stage de Health Check del pipeline, más autenticación JWT
+documentada en Swagger (`/api-docs`).
 
 ## Requisitos
 
@@ -25,6 +26,40 @@ Endpoints:
 
 - `GET /health` → `200 {"status":"ok"}` (stub, sin lógica ni dependencias)
 - `GET /up` → health check por defecto de Rails
+- `POST /auth/register` → `201 {"token":"...","user":{...}}` crea un usuario
+- `POST /auth/login` → `200 {"token":"...","user":{...}}` o `401`
+- `GET /auth/me` → `200 {"user":{...}}` con header `Authorization: Bearer <token>`, `401` si falta o es inválido
+- `GET /api-docs` → Swagger UI (usa el botón **Authorize** para probar `/auth/me`)
+
+## Autenticación JWT
+
+Los tokens se firman con HS256 usando `secret_key_base` y expiran en 24 h.
+Para proteger un controlador nuevo:
+
+```ruby
+class MiController < ApplicationController
+  include Authenticable
+  before_action :authenticate_request!   # deja disponible `current_user`
+end
+```
+
+Diseño y criterios de aceptación en
+[`docs/specs/SCRUM-12-autenticacion-jwt-swagger.md`](docs/specs/SCRUM-12-autenticacion-jwt-swagger.md).
+
+Ejemplo con curl:
+
+```bash
+curl -X POST localhost:3000/auth/register -H 'Content-Type: application/json' \
+  -d '{"user":{"email":"ana@example.com","password":"secreto123"}}'
+curl localhost:3000/auth/me -H "Authorization: Bearer <token>"
+```
+
+Para regenerar `swagger/v1/swagger.yaml` tras cambiar los specs de
+`spec/integration/`:
+
+```bash
+bundle exec rake rswag:specs:swaggerize
+```
 
 ## Tests, lint y seguridad
 

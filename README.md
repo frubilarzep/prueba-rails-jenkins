@@ -1,14 +1,10 @@
 # prueba-rails-jenkins
 
-Sandbox Rails API para validar un pipeline de CI/CD (Jenkins) contra una
-infraestructura ya montada en un droplet Ubuntu (Docker + Nginx + Jenkins +
-Postgres). No es una aplicación real de un equipo, solo sirve para probar que
-el flujo completo (checkout → test → lint → build → deploy → health check)
-funciona de punta a punta.
-
-Incluye un modelo de ejemplo (`Task`) con su controller REST, y un endpoint
-`GET /health` pensado exclusivamente para el stage de Health Check del
-pipeline.
+Rails API (Rails 8.1, Ruby 3.3.7, PostgreSQL) con un pipeline de CI/CD en
+Jenkins que despliega a un droplet Ubuntu ya montado (Docker + Nginx + Jenkins
++ Postgres). El proyecto parte desde un esqueleto vacío con el endpoint `GET /health`
+que usa el stage de Health Check del pipeline, más autenticación JWT
+documentada en Swagger (`/api-docs`).
 
 ## Requisitos
 
@@ -26,17 +22,70 @@ bin/rails server
 
 La app queda disponible en `http://localhost:3000`.
 
-Endpoints principales:
+Endpoints:
 
 - `GET /health` → `200 {"status":"ok"}` (stub, sin lógica ni dependencias)
 - `GET /up` → health check por defecto de Rails
-- `GET|POST /tasks`, `GET|PATCH|DELETE /tasks/:id` → CRUD de ejemplo
+- `POST /auth/register` → `201 {"token":"...","user":{...}}` crea un usuario
+- `POST /auth/login` → `200 {"token":"...","user":{...}}` o `401`
+- `GET /auth/me` → `200 {"user":{...}}` con header `Authorization: Bearer <token>`, `401` si falta o es inválido
+- `GET /api-docs` → Swagger UI (usa el botón **Authorize** para probar `/auth/me`)
 
-## Tests y lint
+## Autenticación JWT
+
+Los tokens se firman con HS256 usando `secret_key_base` y expiran en 24 h.
+Para proteger un controlador nuevo:
+
+```ruby
+class MiController < ApplicationController
+  include Authenticable
+  before_action :authenticate_request!   # deja disponible `current_user`
+end
+```
+
+Diseño y criterios de aceptación en
+[`docs/specs/SCRUM-12-autenticacion-jwt-swagger.md`](docs/specs/SCRUM-12-autenticacion-jwt-swagger.md).
+
+## Serialización JSON
+
+Las respuestas se arman con [blueprinter](https://github.com/procore-oss/blueprinter).
+Cada recurso expuesto tiene su clase en `app/blueprints/` y el controlador
+renderiza con ella, de modo que los modelos no sobrescriben `as_json`:
+
+```ruby
+class PersonBlueprint < ApplicationBlueprint
+  identifier :id
+  fields :name, :email
+end
+
+render json: PersonBlueprint.render_as_hash(person)                 # { id:, name:, email: }
+render json: PersonBlueprint.render_as_hash(people, root: :people)  # { people: [ ... ] }
+```
+
+Detalles en [`docs/specs/SCRUM-13-blueprinter.md`](docs/specs/SCRUM-13-blueprinter.md).
+
+Ejemplo con curl:
+
+```bash
+curl -X POST localhost:3000/auth/register -H 'Content-Type: application/json' \
+  -d '{"user":{"email":"ana@example.com","password":"secreto123"}}'
+curl localhost:3000/auth/me -H "Authorization: Bearer <token>"
+```
+
+Para regenerar `swagger/v1/swagger.yaml` tras cambiar los specs de
+`spec/integration/`:
+
+```bash
+bundle exec rake rswag:specs:swaggerize
+```
+
+## Tests, lint y seguridad
 
 ```bash
 bundle exec rspec
 bundle exec rubocop
+bin/brakeman --no-pager
+bin/bundler-audit
 ```
 
 ## Docker
@@ -55,24 +104,29 @@ El container escucha en el puerto **3000**.
 
 El `Jenkinsfile` en la raíz define un Multibranch Pipeline liviano (el
 servidor Jenkins corre con `executors=1`, por lo que `disableConcurrentBuilds()`
-está activo):
+está activo). Los stages de build y test corren dentro de un container
+`ruby:3.3.7-slim` conectado a la red Docker `course-net`:
 
 1. **Checkout**
 2. **Install deps** — `bundle install`
-3. **Test** — prepara la DB de test y corre `rspec`
+3. **Test** — `bin/rails db:schema:load` + `rspec` contra la DB de test
 4. **Lint** — `rubocop`
-5. **Build image** — `docker build -t sandbox-cicd .`
+5. **Security scan** — `brakeman` + `bundler-audit`
+6. **Build image** — `docker build -t sandbox-cicd .`
 
 Los siguientes stages solo corren en la rama `production`:
 
-6. **Deploy** — levanta el container `sandbox-cicd` en la red Docker externa
+7. **Deploy** — levanta el container `sandbox-cicd` en la red Docker externa
    `course-net`, publicado solo en `127.0.0.1:4099` (puerto interno 3000, sin
    exponerlo públicamente ni dominio/HTTPS).
-7. **Migrate** — no-op: este sandbox no tiene base de datos provisionada.
-8. **Health Check** — `curl -f http://127.0.0.1:4099/health`
+8. **Migrate** — no-op: este sandbox no tiene base de datos provisionada.
+9. **Health Check** — `curl -f http://127.0.0.1:4099/health`
 
-### Credencial requerida en Jenkins
+### Credenciales requeridas en Jenkins
 
-El stage **Deploy** espera una credencial de tipo *Secret text* con el id
-`sandbox-cicd-rails-master-key`, cuyo valor sea el contenido de
-`config/master.key` (no está versionado). Sin esa credencial el deploy falla.
+| Id                              | Tipo        | Uso                                                   |
+|---------------------------------|-------------|-------------------------------------------------------|
+| `sandbox-cicd-test-db-url`      | Secret text | `DATABASE_URL` de la DB de test usada por el stage Test |
+| `sandbox-cicd-rails-master-key` | Secret text | Contenido de `config/master.key` para el stage Deploy  |
+
+Sin esas credenciales el pipeline falla.

@@ -3,33 +3,22 @@ openapi: 3.0.1
 info:
   title: Prueba Rails Jenkins API
   version: v1
+  description: API de ejemplo con autenticación JWT. Obtén un token en /auth/register
+    o /auth/login y úsalo con el botón Authorize.
 paths:
-  "/asignaturas":
-    get:
-      summary: Lista todas las asignaturas
-      tags:
-      - Asignaturas
-      responses:
-        '200':
-          description: asignaturas encontradas
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  "$ref": "#/components/schemas/asignatura"
+  "/auth/register":
     post:
-      summary: Crea una asignatura
+      summary: Registra un usuario y devuelve un JWT
       tags:
-      - Asignaturas
+      - Auth
       parameters: []
       responses:
         '201':
-          description: asignatura creada
+          description: usuario creado
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/asignatura"
+                "$ref": "#/components/schemas/session"
         '422':
           description: parámetros inválidos
           content:
@@ -42,116 +31,37 @@ paths:
             schema:
               type: object
               properties:
-                asignatura:
+                user:
                   type: object
                   properties:
-                    nombre:
+                    email:
                       type: string
-                    codigo:
+                      format: email
+                    password:
                       type: string
-                    seccion:
-                      type: integer
-                    semestre:
+                      minLength: 8
+                    password_confirmation:
                       type: string
                   required:
-                  - nombre
-                  - codigo
-                  - seccion
-                  - semestre
+                  - email
+                  - password
               required:
-              - asignatura
-  "/asignaturas/{id}":
-    parameters:
-    - name: id
-      in: path
-      required: true
-      schema:
-        type: integer
-    get:
-      summary: Obtiene una asignatura
-      tags:
-      - Asignaturas
-      responses:
-        '200':
-          description: asignatura encontrada
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/asignatura"
-        '404':
-          description: asignatura no encontrada
-    patch:
-      summary: Actualiza una asignatura
-      tags:
-      - Asignaturas
-      parameters: []
-      responses:
-        '200':
-          description: asignatura actualizada
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/asignatura"
-        '422':
-          description: parámetros inválidos
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/errors"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                asignatura:
-                  type: object
-                  properties:
-                    nombre:
-                      type: string
-                    codigo:
-                      type: string
-                    seccion:
-                      type: integer
-                    semestre:
-                      type: string
-              required:
-              - asignatura
-    delete:
-      summary: Elimina una asignatura
-      tags:
-      - Asignaturas
-      responses:
-        '204':
-          description: asignatura eliminada
-  "/assigns":
-    get:
-      summary: Lista todos los assigns
-      tags:
-      - Assigns
-      responses:
-        '200':
-          description: assigns encontrados
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  "$ref": "#/components/schemas/assign"
+              - user
+  "/auth/login":
     post:
-      summary: Crea un assign
+      summary: Inicia sesión y devuelve un JWT
       tags:
-      - Assigns
+      - Auth
       parameters: []
       responses:
-        '201':
-          description: assign creado
+        '200':
+          description: credenciales válidas
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/assign"
-        '422':
-          description: parámetros inválidos
+                "$ref": "#/components/schemas/session"
+        '401':
+          description: credenciales inválidas
           content:
             application/json:
               schema:
@@ -162,311 +72,45 @@ paths:
             schema:
               type: object
               properties:
-                assign:
-                  type: object
-                  properties:
-                    titulo:
-                      type: string
-                    fecha_inscripcion:
-                      type: string
-                      format: date
-                  required:
-                  - titulo
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
               required:
-              - assign
-  "/assigns/{id}":
-    parameters:
-    - name: id
-      in: path
-      required: true
-      schema:
-        type: integer
+              - email
+              - password
+  "/auth/me":
     get:
-      summary: Obtiene un assign
+      summary: Devuelve el usuario autenticado
       tags:
-      - Assigns
+      - Auth
+      security:
+      - bearerAuth: []
       responses:
         '200':
-          description: assign encontrado
+          description: token válido
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/assign"
-        '404':
-          description: assign no encontrado
-    patch:
-      summary: Actualiza un assign
-      tags:
-      - Assigns
-      parameters: []
-      responses:
-        '200':
-          description: assign actualizado
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/assign"
-        '422':
-          description: parámetros inválidos
+                type: object
+                properties:
+                  user:
+                    "$ref": "#/components/schemas/user"
+                required:
+                - user
+        '401':
+          description: token ausente, inválido o expirado
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/errors"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                assign:
-                  type: object
-                  properties:
-                    titulo:
-                      type: string
-                    fecha_inscripcion:
-                      type: string
-                      format: date
-              required:
-              - assign
-    delete:
-      summary: Elimina un assign
-      tags:
-      - Assigns
-      responses:
-        '204':
-          description: assign eliminado
-  "/people":
-    get:
-      summary: Lista todas las personas
-      tags:
-      - People
-      responses:
-        '200':
-          description: personas encontradas
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  "$ref": "#/components/schemas/person"
-    post:
-      summary: Crea una persona
-      tags:
-      - People
-      parameters: []
-      responses:
-        '201':
-          description: persona creada
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/person"
-        '422':
-          description: parámetros inválidos
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/errors"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                person:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                    rut:
-                      type: string
-                    age:
-                      type: integer
-                    address:
-                      type: string
-                  required:
-                  - name
-                  - rut
-              required:
-              - person
-  "/people/{id}":
-    parameters:
-    - name: id
-      in: path
-      required: true
-      schema:
-        type: integer
-    get:
-      summary: Obtiene una persona
-      tags:
-      - People
-      responses:
-        '200':
-          description: persona encontrada
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/person"
-        '404':
-          description: persona no encontrada
-    patch:
-      summary: Actualiza una persona
-      tags:
-      - People
-      parameters: []
-      responses:
-        '200':
-          description: persona actualizada
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/person"
-        '422':
-          description: parámetros inválidos
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/errors"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                person:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                    rut:
-                      type: string
-                    age:
-                      type: integer
-                    address:
-                      type: string
-              required:
-              - person
-    delete:
-      summary: Elimina una persona
-      tags:
-      - People
-      responses:
-        '204':
-          description: persona eliminada
-  "/tasks":
-    get:
-      summary: Lista todas las tareas
-      tags:
-      - Tasks
-      responses:
-        '200':
-          description: tareas encontradas
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  "$ref": "#/components/schemas/task"
-    post:
-      summary: Crea una tarea
-      tags:
-      - Tasks
-      parameters: []
-      responses:
-        '201':
-          description: tarea creada
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/task"
-        '422':
-          description: parámetros inválidos
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/errors"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                task:
-                  type: object
-                  properties:
-                    title:
-                      type: string
-                    description:
-                      type: string
-                    completed:
-                      type: boolean
-                  required:
-                  - title
-              required:
-              - task
-  "/tasks/{id}":
-    parameters:
-    - name: id
-      in: path
-      required: true
-      schema:
-        type: integer
-    get:
-      summary: Obtiene una tarea
-      tags:
-      - Tasks
-      responses:
-        '200':
-          description: tarea encontrada
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/task"
-        '404':
-          description: tarea no encontrada
-    patch:
-      summary: Actualiza una tarea
-      tags:
-      - Tasks
-      parameters: []
-      responses:
-        '200':
-          description: tarea actualizada
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/task"
-        '422':
-          description: parámetros inválidos
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/errors"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                task:
-                  type: object
-                  properties:
-                    title:
-                      type: string
-                    description:
-                      type: string
-                    completed:
-                      type: boolean
-              required:
-              - task
-    delete:
-      summary: Elimina una tarea
-      tags:
-      - Tasks
-      responses:
-        '204':
-          description: tarea eliminada
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     errors:
       type: object
@@ -477,99 +121,28 @@ components:
             type: string
       required:
       - errors
-    task:
+    user:
       type: object
       properties:
         id:
           type: integer
-        title:
+        email:
           type: string
-        description:
-          type: string
-          nullable: true
-        completed:
-          type: boolean
-        cosa:
-          type: string
-          nullable: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+          format: email
       required:
       - id
-      - title
-    asignatura:
+      - email
+    session:
       type: object
       properties:
-        id:
-          type: integer
-        nombre:
+        token:
           type: string
-        codigo:
-          type: string
-        seccion:
-          type: integer
-        semestre:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+          description: JWT firmado (HS256), expira en 24 horas
+        user:
+          "$ref": "#/components/schemas/user"
       required:
-      - id
-      - nombre
-      - codigo
-      - seccion
-      - semestre
-    assign:
-      type: object
-      properties:
-        id:
-          type: integer
-        titulo:
-          type: string
-        fecha_inscripcion:
-          type: string
-          format: date
-          nullable: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-      required:
-      - id
-      - titulo
-    person:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        rut:
-          type: string
-        age:
-          type: integer
-          nullable: true
-        address:
-          type: string
-          nullable: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-      required:
-      - id
-      - name
-      - rut
+      - token
+      - user
 servers:
 - url: "/"
+  description: Este servidor

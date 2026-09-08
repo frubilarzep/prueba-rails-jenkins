@@ -10,7 +10,7 @@ gem "puma", ">= 5.0"
 # gem "jbuilder"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-# gem "bcrypt", "~> 3.1.7"
+gem "bcrypt", "~> 3.1.7"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
@@ -23,15 +23,18 @@ gem "solid_cable"
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
-# Deploy this application anywhere as a Docker container [https://kamal-deploy.org]
-gem "kamal", require: false
-
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 2.0"
 gem "ruby-vips", "~> 2.2"
+
+# JSON Web Tokens for API authentication [https://github.com/jwt/ruby-jwt]
+gem "jwt", "~> 2.9"
+
+# Declarative JSON serialization via blueprints in app/blueprints [https://github.com/procore-oss/blueprinter]
+gem "blueprinter", "~> 1.1"
 
 # Serve OpenAPI (Swagger) docs and UI at /api-docs [https://github.com/rswag/rswag]
 gem "rswag-api"

@@ -1,28 +1,30 @@
-# frozen_string_literal: true
-
-require 'rails_helper'
+require "rails_helper"
 
 RSpec.configure do |config|
-  # Specify a root folder where Swagger JSON files are generated
-  # NOTE: If you're using the rswag-api to serve API descriptions, you'll need
-  # to ensure that it's configured to serve Swagger from the same folder
-  config.openapi_root = Rails.root.join('swagger').to_s
+  # Folder where the OpenAPI files are generated. rswag-api serves this same
+  # folder at /api-docs (see config/initializers/rswag_api.rb).
+  config.openapi_root = Rails.root.join("swagger").to_s
 
-  # Define one or more Swagger documents and provide global metadata for each one
-  # When you run the 'rswag:specs:swaggerize' rake task, the complete Swagger will
-  # be generated at the provided relative path under openapi_root
-  # By default, the operations defined in spec files are added to the first
-  # document below. You can override this behavior by adding a openapi_spec tag to the
-  # the root example_group in your specs, e.g. describe '...', openapi_spec: 'v2/swagger.json'
+  # Run `bundle exec rake rswag:specs:swaggerize` to regenerate the documents
+  # below from the specs in spec/integration.
   config.openapi_specs = {
-    'v1/swagger.yaml' => {
-      openapi: '3.0.1',
+    "v1/swagger.yaml" => {
+      openapi: "3.0.1",
       info: {
-        title: 'Prueba Rails Jenkins API',
-        version: 'v1'
+        title: "Prueba Rails Jenkins API",
+        version: "v1",
+        description: "API de ejemplo con autenticación JWT. " \
+                     "Obtén un token en /auth/register o /auth/login y úsalo con el botón Authorize."
       },
       paths: {},
       components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: :http,
+            scheme: :bearer,
+            bearerFormat: "JWT"
+          }
+        },
         schemas: {
           errors: {
             type: :object,
@@ -31,69 +33,29 @@ RSpec.configure do |config|
             },
             required: %w[errors]
           },
-          task: {
+          user: {
             type: :object,
             properties: {
               id: { type: :integer },
-              title: { type: :string },
-              description: { type: :string, nullable: true },
-              completed: { type: :boolean },
-              cosa: { type: :string, nullable: true },
-              created_at: { type: :string, format: 'date-time' },
-              updated_at: { type: :string, format: 'date-time' }
+              email: { type: :string, format: :email }
             },
-            required: %w[id title]
+            required: %w[id email]
           },
-          asignatura: {
+          session: {
             type: :object,
             properties: {
-              id: { type: :integer },
-              nombre: { type: :string },
-              codigo: { type: :string },
-              seccion: { type: :integer },
-              semestre: { type: :string },
-              created_at: { type: :string, format: 'date-time' },
-              updated_at: { type: :string, format: 'date-time' }
+              token: { type: :string, description: "JWT firmado (HS256), expira en 24 horas" },
+              user: { "$ref" => "#/components/schemas/user" }
             },
-            required: %w[id nombre codigo seccion semestre]
-          },
-          assign: {
-            type: :object,
-            properties: {
-              id: { type: :integer },
-              titulo: { type: :string },
-              fecha_inscripcion: { type: :string, format: 'date', nullable: true },
-              created_at: { type: :string, format: 'date-time' },
-              updated_at: { type: :string, format: 'date-time' }
-            },
-            required: %w[id titulo]
-          },
-          person: {
-            type: :object,
-            properties: {
-              id: { type: :integer },
-              name: { type: :string },
-              rut: { type: :string },
-              age: { type: :integer, nullable: true },
-              address: { type: :string, nullable: true },
-              created_at: { type: :string, format: 'date-time' },
-              updated_at: { type: :string, format: 'date-time' }
-            },
-            required: %w[id name rut]
+            required: %w[token user]
           }
         }
       },
       servers: [
-        # Relative URL so "Try it out" targets whichever host serves the docs
-        # (localhost in development, the container host in the deploy).
-        { url: '/' }
+        { url: "/", description: "Este servidor" }
       ]
     }
   }
 
-  # Specify the format of the output Swagger file when running 'rswag:specs:swaggerize'.
-  # The openapi_specs configuration option has the filename including format in
-  # the key, this may want to be changed to avoid putting yaml in json files.
-  # Defaults to json. Accepts ':json' and ':yaml'.
   config.openapi_format = :yaml
 end

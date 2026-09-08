@@ -46,6 +46,24 @@ end
 Diseño y criterios de aceptación en
 [`docs/specs/SCRUM-12-autenticacion-jwt-swagger.md`](docs/specs/SCRUM-12-autenticacion-jwt-swagger.md).
 
+## Serialización JSON
+
+Las respuestas se arman con [blueprinter](https://github.com/procore-oss/blueprinter).
+Cada recurso expuesto tiene su clase en `app/blueprints/` y el controlador
+renderiza con ella, de modo que los modelos no sobrescriben `as_json`:
+
+```ruby
+class PersonBlueprint < ApplicationBlueprint
+  identifier :id
+  fields :name, :email
+end
+
+render json: PersonBlueprint.render_as_hash(person)                 # { id:, name:, email: }
+render json: PersonBlueprint.render_as_hash(people, root: :people)  # { people: [ ... ] }
+```
+
+Detalles en [`docs/specs/SCRUM-13-blueprinter.md`](docs/specs/SCRUM-13-blueprinter.md).
+
 Ejemplo con curl:
 
 ```bash

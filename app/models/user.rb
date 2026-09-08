@@ -8,10 +8,6 @@ class User < ApplicationRecord
                     format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 8 }, allow_nil: true
 
-  def as_json(options = nil)
-    super({ only: %i[id email] }.merge(options || {}))
-  end
-
   private
 
   def normalize_email

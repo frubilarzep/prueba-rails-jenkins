@@ -36,9 +36,4 @@ RSpec.describe User, type: :model do
     expect(user.authenticate("secreto123")).to eq(user)
     expect(user.authenticate("otra")).to be(false)
   end
-
-  it "only exposes id and email as JSON" do
-    user = create(:user)
-    expect(user.as_json.keys).to contain_exactly("id", "email")
-  end
 end

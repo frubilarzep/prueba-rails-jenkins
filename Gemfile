@@ -33,6 +33,9 @@ gem "ruby-vips", "~> 2.2"
 # JSON Web Tokens for API authentication [https://github.com/jwt/ruby-jwt]
 gem "jwt", "~> 2.9"
 
+# Declarative JSON serialization via blueprints in app/blueprints [https://github.com/procore-oss/blueprinter]
+gem "blueprinter", "~> 1.1"
+
 # Serve OpenAPI (Swagger) docs and UI at /api-docs [https://github.com/rswag/rswag]
 gem "rswag-api"
 gem "rswag-ui"

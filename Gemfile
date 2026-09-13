@@ -31,7 +31,7 @@ gem "image_processing", "~> 2.0"
 gem "ruby-vips", "~> 2.2"
 
 # JSON Web Tokens for API authentication [https://github.com/jwt/ruby-jwt]
-gem "jwt", "~> 2.9"
+gem "jwt", "~> 3.2"
 
 # Declarative JSON serialization via blueprints in app/blueprints [https://github.com/procore-oss/blueprinter]
 gem "blueprinter", "~> 1.1"

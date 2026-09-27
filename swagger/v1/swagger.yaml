@@ -105,6 +105,33 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/errors"
+  "/health":
+    get:
+      summary: Estado de la aplicación (usado por el Health Check del deploy)
+      tags:
+      - Health
+      responses:
+        '200':
+          description: la aplicación responde
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - ok
+                required:
+                - status
+  "/up":
+    get:
+      summary: Health check de Rails (200 si la app arranca sin excepciones)
+      tags:
+      - Health
+      responses:
+        '200':
+          description: la aplicación arrancó correctamente
 components:
   securitySchemes:
     bearerAuth:
